@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { convertCodeUsingAPI } from './llm';
 
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('code-generate.helloWorld', async () => {
@@ -10,8 +11,11 @@ export function activate(context: vscode.ExtensionContext) {
 					const document = editor.document;
 					const originalCode = document.getText();
 
+					// 显示加载提示
+            		const loadingMessage = vscode.window.setStatusBarMessage('代码正在转换中，请耐心等待...');
 					// 在这里调用你的转换函数
 					const convertedCode = await convertCodeUsingAPI(originalCode);
+				
 
 					// 获取当前文件的后缀
 					const ext = path.extname(document.uri.fsPath);
@@ -37,19 +41,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 					} catch (error: any) {
 							vscode.window.showErrorMessage(`Failed to process file: ${error.message}`);
-					}
+				}
+				loadingMessage.dispose()
 			} else {
 					vscode.window.showInformationMessage('No active editor found');
-			}
+		}
 	});
 
 	context.subscriptions.push(disposable);
-}
-
-async function convertCodeUsingAPI(code: string): Promise<string> {
-	// 模拟调用API进行代码转换
-	// 实际情况下，你需要调用真实的API
-	return code.split('').reverse().join(''); // 示例：简单反转代码字符串
 }
 
 // This method is called when your extension is deactivated
