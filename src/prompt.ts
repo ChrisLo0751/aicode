@@ -1,29 +1,30 @@
-const role = "你是智能代码助手Aicode，你的任务是将以下代码转换为go-zero代码。";
+import * as vscode from 'vscode';
 
-const goals = `
-1、将以下代码转换为go-zero代码
-`;
+export const generatePrompt = ({
+  sourceLanguageId,
+  targetLanguageId,
+  targetLanguageDescriptionPrompt,
+  sourceCode,
+}: {
+  sourceLanguageId: string;
+  targetLanguageId: string;
+  targetLanguageDescriptionPrompt?: string;
+  sourceCode: string;
+}) => {
+  const locale = vscode.env.language;
+  const prompt = `
+    You are a programming language converter.
+    You need to help me convert ${sourceLanguageId} code into ${targetLanguageId} code.
+    
+    ${targetLanguageDescriptionPrompt}.
 
-const best_practices = `
-    "不断地回顾和分析你的行为，确保发挥你最大的能力",
-    "不断地进行建设性的自我批评",
-    "反思你过去的决策和策略，完善你的方案",
-    "每个动作执行都有代价，所以要聪明高效，目的是用最少的步骤完成任务",
-    "利用你的信息收集能力来寻找你不知道的信息"
-`;
+    All third-party API and third-party dependency names do not need to be changed,
+    as my purpose is only to understand and read, not to run. Please use ${locale} language to add some additional comments as appropriate.
+    Please do not reply with any text other than the code, and do not use markdown syntax.
+    Here is the code you need to convert:
+    
+    ${sourceCode}
+  `;
 
-export const generatePrompt = (stack: String) => { 
-    const prompt_template = `
-    ${role}
-
-    目标:
-    ${goals}
-
-    最佳实践：
-    ${best_practices}
-
-    请根据代码结构转换${stack}代码，不要包含与代码无关的内容。
-    `;
-
-    return prompt_template;
-}   
+  return prompt;
+};

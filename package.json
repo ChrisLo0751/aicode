@@ -39,9 +39,23 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@langchain/openai": "^0.2.5",
+    "@langchain/community": "^0.2.16",
+    "@langchain/core": "v0.2.15",
+    "@langchain/langgraph": "^0.0.26",
+    "@langchain/openai": "^0.2.1",
     "dotenv": "^16.4.5",
     "langchain": "^0.2.12",
     "openai": "^4.54.0"
+  },
+  "resolutions": {
+    "@langchain/core": "v0.2.15"
+  },
+  "overrides": {
+    "@langchain/core": "v0.2.15"
+  },
+  "pnpm": {
+    "overrides": {
+      "@langchain/core": "v0.2.15"
+    }
   }
 }

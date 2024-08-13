@@ -1,32 +1,43 @@
 import OpenAI from 'openai';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { generatePrompt } from "./prompt";
+import { client } from "./langchain";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { JsonOutputParser } from "@langchain/core/output_parsers";
+import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts";
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-export async function convertCodeUsingAPI(code: string): Promise<string> {
-    const openai = new OpenAI({
-        baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        apiKey: process.env.OPENAI_API_KEY
+export async function convertCodeUsingAPI(sourceCode: string, onChunk: (message: string, status: boolean) => void) {
+    const prompt = ChatPromptTemplate.fromMessages([
+        ["system", `
+            You are a programming language converter.
+            You need to help me convert {sourceLanguageId} code into {targetLanguageId} code.
+            
+            {targetLanguageDescriptionPrompt}.
+
+            All third-party API and third-party dependency names do not need to be changed,
+            as my purpose is only to understand and read, not to run. Please use {locale} language to add some additional comments as appropriate.
+            Please do not reply with any text other than the code, and do not use markdown syntax.
+            User will provide the code to convert.
+        `],
+        ["user", "{sourceCode}"],
+    ]);
+
+
+    const parser = new StringOutputParser();
+    const chain = prompt.pipe(client).pipe(parser);
+    const stream = await chain.stream({
+        sourceLanguageId: "erlang",
+        targetLanguageId: "go",
+        targetLanguageDescriptionPrompt: "Please convert the following code to Go.",
+        sourceCode,
+        locale: "en",
     });
 
-    try {
-        const response = await openai.chat.completions.create({
-            model: "qwen1.5-72b-chat",
-            messages: [
-                { role: "system", content: generatePrompt("go-zero") },
-                { role: "user", content: `Please convert the following code:\n\n${code}` }
-            ],
-            temperature: 0,
-        });
-
-        if (response.choices && response.choices.length > 0) {
-            return response.choices[0].message.content || "No conversion result";
-        } else {
-            throw new Error("No response from OpenAI");
-        }
-    } catch (error: any) {
-        console.error("Error calling OpenAI API:", error);
-        throw new Error(`Failed to convert code: ${error.message}`);
+    let chunks = "";
+    for await (const chunk of stream) {
+        console.log(`${chunk}|`);
+        chunks += chunk;
+        onChunk(chunks, false);
     }
 }
